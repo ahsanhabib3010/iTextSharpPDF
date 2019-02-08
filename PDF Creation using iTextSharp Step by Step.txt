@@ -1,0 +1,166 @@
+>>>>>>>>>>>>>>>>>>  Generating PDF using iTextSharp  <<<<<<<<<<<<<<<<<<
+
+1) Create Model in Model folder e.g: Student.cs
+
+2) Declare all the fields in Student.cs class
+
+3) Create 'StudentController.cs' in Contollers folder and place the following code:
+
+	public ActionResult Report(Student student)
+        {
+            StudentReport studentReport = new StudentReport();
+            byte[] abytes = studentReport.PrepareReport(GetStudents());
+            return File(abytes, "application/pdf");
+        }
+
+        public List<Student> GetStudents()
+        {
+            List<Student> students = new List<Student>();
+            Student student = new Student();
+            for(int i=1; i<=600; i++)
+            {
+                student = new Student();
+                student.Id = i;
+                student.Name = "Student " + i;
+                student.Roll = "Roll " + i;
+                students.Add(student);
+            }
+            return students;
+        }
+
+4) Create a folder in Project of name Report as you want then create a file of 'StudentReport.cs' 
+where a design of PDF is declared:
+
+5) Code the following code:
+
+    public class StudentReport
+    {
+        #region Declaration
+	// Declaring all the variable for PDF creation
+        int _totalColumn = 3;
+        Document _document;
+        Font _fontStyle;
+        PdfPTable _pdfTable = new PdfPTable(3);
+        PdfPCell _pdfPCell;
+        MemoryStream _memoryStream = new MemoryStream();
+        List<Student> _students = new List<Student>();
+        #endregion
+
+        public byte[] PrepareReport(List<Student> students)
+        {
+            _students = students;
+
+            #region Page Setup
+            _document = new Document(PageSize.A4, 0f, 0f, 0f, 0f);
+            _document.SetPageSize(PageSize.A4);
+            _document.SetMargins(25f, 25f, 25f, 25f);
+            _pdfTable.WidthPercentage = 100;
+            _pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
+            _fontStyle = FontFactory.GetFont("Times New Roman", 8f, 1);
+            PdfWriter.GetInstance(_document, _memoryStream);
+            _document.Open();
+            _pdfTable.SetWidths(new float[] { 20f, 150f, 100f });
+
+            this.ReportHeader();
+            this.ReportBody();
+
+            _pdfTable.HeaderRows = 2;
+
+            _document.Add(_pdfTable);
+            _document.Close();
+
+            return _memoryStream.ToArray();
+            #endregion
+        }
+	
+	// Creating PDF Report Header
+        private void ReportHeader()
+        {
+	    // Creating Heading
+            _fontStyle = FontFactory.GetFont("Times New Roman", 11f, 1);
+            _pdfPCell = new PdfPCell(new Phrase("Synctech Solutions", _fontStyle));
+            _pdfPCell.Colspan = _totalColumn;
+            _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            _pdfPCell.Border = 0;
+            _pdfPCell.BackgroundColor = BaseColor.WHITE;
+            _pdfPCell.ExtraParagraphSpace = 0;
+            _pdfTable.AddCell(_pdfPCell);
+
+
+	    // Creating Sub-Heading 
+            _fontStyle = FontFactory.GetFont("Times New Roman", 9f, 1);
+            _pdfPCell = new PdfPCell(new Phrase("Students Record", _fontStyle));
+            _pdfPCell.Colspan = _totalColumn;
+            _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            _pdfPCell.Border = 0;
+            _pdfPCell.BackgroundColor = BaseColor.WHITE;
+            _pdfPCell.ExtraParagraphSpace = 0;
+            _pdfTable.AddCell(_pdfPCell);
+        }
+
+        private void ReportBody()
+        {
+            #region Table Header
+
+	    // Setting Font size for Table Heading
+            _fontStyle = FontFactory.GetFont("Times New Roman", 8f, 1);
+
+	    // Creating 1st Column of Serial Number Heading
+            _pdfPCell = new PdfPCell(new Phrase("Serial Number", _fontStyle));
+            _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            _pdfPCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            _pdfPCell.BackgroundColor = BaseColor.LIGHT_GRAY;
+            _pdfTable.AddCell(_pdfPCell);
+
+	    // Creating 2nd Column of Student Name Heading
+            _pdfPCell = new PdfPCell(new Phrase("Student Name", _fontStyle));
+            _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            _pdfPCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            _pdfPCell.BackgroundColor = BaseColor.LIGHT_GRAY;
+            _pdfTable.AddCell(_pdfPCell);
+
+	    // Creating 3rd Column of Student Roll Number Heading
+            _pdfPCell = new PdfPCell(new Phrase("Student Rollno", _fontStyle));
+            _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+            _pdfPCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+            _pdfPCell.BackgroundColor = BaseColor.LIGHT_GRAY;
+            _pdfTable.AddCell(_pdfPCell);
+            _pdfTable.CompleteRow();
+            #endregion
+
+
+            #region Table Body
+            _fontStyle = FontFactory.GetFont("Times New Roman", 8f, 0);
+            int serialNumber = 1;
+
+            foreach(Student student in _students)
+            {
+		// Column 1 of Student ID
+                _pdfPCell = new PdfPCell(new Phrase(serialNumber++.ToString(), _fontStyle));
+                _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                _pdfPCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                _pdfPCell.BackgroundColor = BaseColor.WHITE;
+                _pdfTable.AddCell(_pdfPCell);
+
+
+		// Column 2 of Student Name
+                _pdfPCell = new PdfPCell(new Phrase(student.Name, _fontStyle));
+                _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                _pdfPCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                _pdfPCell.BackgroundColor = BaseColor.WHITE;
+                _pdfTable.AddCell(_pdfPCell);
+
+
+		// Column 3 of Student Roll no
+                _pdfPCell = new PdfPCell(new Phrase(student.Roll, _fontStyle));
+                _pdfPCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                _pdfPCell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                _pdfPCell.BackgroundColor = BaseColor.WHITE;
+                _pdfTable.AddCell(_pdfPCell);
+                _pdfTable.CompleteRow();
+
+            }
+            #endregion
+        }
+
+6) Run the Program.
